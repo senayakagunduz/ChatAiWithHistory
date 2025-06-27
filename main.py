@@ -13,10 +13,12 @@ model = ChatGroq(model_name="llama3-8b-8192", temperature=0.1)
 # Oturum geçmişi saklamak için store
 store = {}
 
+
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = InMemoryChatMessageHistory()
     return store[session_id]
+
 
 # Prompt tanımı (düzgün virgüllerle)
 prompt = ChatPromptTemplate.from_messages([
@@ -35,12 +37,12 @@ with_message_history = RunnableWithMessageHistory(chain, get_session_history)
 
 # Ana giriş noktası
 if __name__ == '__main__':
+    # true olduğu sürece cevap verecek
     while True:
-        user_input = input("> ")
-        if user_input.lower() in {"exit", "quit"}:
-            break
-        response = with_message_history.invoke(
-            input=[HumanMessage(content=user_input)],
-            config=config
-        )
-        print(response.content)
+        user_input = input(">")
+        for r in with_message_history.stream(
+                input=[
+                    HumanMessage(content=user_input)
+                ],
+                config=config
+        ): print(r.content, end=" ")
